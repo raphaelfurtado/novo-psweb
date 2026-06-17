@@ -93,8 +93,9 @@ class Index extends Component
     {
         $pagamentos = $this->baseQuery()
             ->with(['usuario', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes'])
-            ->orderByDesc('data_pagamento')
-            ->orderByDesc('id')
+            // Ordena por referência crescente (ano, depois mês) — ordem cronológica.
+            ->orderByRaw('SUBSTR(referencia, 3, 4) ASC, SUBSTR(referencia, 1, 2) ASC')
+            ->orderBy('id')
             ->paginate(15);
 
         return view('livewire.pagamentos.index', [

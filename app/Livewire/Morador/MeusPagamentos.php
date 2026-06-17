@@ -34,8 +34,9 @@ class MeusPagamentos extends Component
     {
         $pagamentos = $this->baseQuery()
             ->with(['tipoPagamento', 'formaPagamento', 'comprovantes'])
-            ->orderByDesc('referencia')
-            ->orderByDesc('id')
+            // Referência crescente (ano, depois mês) — ordem cronológica.
+            ->orderByRaw('SUBSTR(referencia, 3, 4) ASC, SUBSTR(referencia, 1, 2) ASC')
+            ->orderBy('id')
             ->get();
 
         return view('livewire.morador.meus-pagamentos', [

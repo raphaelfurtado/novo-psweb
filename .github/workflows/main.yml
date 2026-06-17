@@ -1,7 +1,7 @@
-on: 
-    push: 
+on:
+    push:
         branches:
-            - main  
+            - main
 name: 🚀 Deploy website on push
 jobs:
   web-deploy:
@@ -10,7 +10,17 @@ jobs:
     steps:
     - name: 🚚 Get latest code
       uses: actions/checkout@v4
-    
+
+    - name: ⎔ Setup Node
+      uses: actions/setup-node@v4
+      with:
+          node-version: 20
+
+    - name: 📦 Install dependencies & build assets
+      run: |
+          npm ci
+          npm run build
+
     - name: 📂 Sync files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
@@ -19,14 +29,14 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: novo-psweb/
           # Protege arquivos que vivem só no servidor (não vêm do repositório):
-          # .env de produção, dependências/builds e os anexos enviados.
+          # .env de produção, dependências e os anexos enviados.
+          # OBS: public/build agora É enviado (gerado no passo de build acima).
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
             **/.env
             **/vendor/**
-            **/public/build/**
             **/public/hot
             public/storage
             **/storage/app/uploads/**
