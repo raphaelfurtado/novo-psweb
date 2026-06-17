@@ -42,3 +42,16 @@ jobs:
             **/storage/app/uploads/**
             **/storage/framework/**
             **/storage/logs/**
+
+    # O document root do domínio (psweb.forcehub.com.br/) tem um index.php "shim"
+    # que carrega o Laravel de ../novo-psweb. O PHP lê o manifest de
+    # novo-psweb/public/build (sync acima), mas o Apache serve /build/ a partir
+    # do docroot. Por isso o build precisa ir TAMBÉM para o docroot.
+    - name: 📂 Sync build to docroot
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./public/build/
+          server-dir: psweb.forcehub.com.br/build/
