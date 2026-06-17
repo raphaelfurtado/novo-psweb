@@ -85,7 +85,7 @@
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                                         </button>
                                     @endif
-                                    <a href="{{ route('pagamentos.edit', $p) }}" wire:navigate class="btn-ghost p-2" title="Editar">
+                                    <a href="{{ route('pagamentos.edit', array_merge(['pagamento' => $p->id], $this->filtrosAtuais())) }}" wire:navigate class="btn-ghost p-2" title="Editar">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
                                     </a>
                                     <button class="btn-ghost p-2 text-red-500" wire:click="excluir({{ $p->id }})"

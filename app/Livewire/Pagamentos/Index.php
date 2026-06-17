@@ -66,14 +66,19 @@ class Index extends Component
     /** Parâmetros (filtros atuais) para os links de exportação PDF/Excel. */
     public function paramsExport(string $fmt): array
     {
-        return [
-            'fmt' => $fmt,
+        return ['fmt' => $fmt] + $this->filtrosAtuais();
+    }
+
+    /** Filtros atuais (não vazios) — usados para preservar o contexto ao editar/voltar. */
+    public function filtrosAtuais(): array
+    {
+        return array_filter([
+            'q' => $this->search,
             'ano' => $this->ano,
             'mes' => $this->mes,
             'situacao' => $this->situacao,
             'tipo' => $this->tipo,
-            'q' => $this->search,
-        ];
+        ], fn ($v) => $v !== '' && $v !== null);
     }
 
     protected function baseQuery()

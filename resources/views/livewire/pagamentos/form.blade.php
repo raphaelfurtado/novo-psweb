@@ -1,7 +1,7 @@
 <div>
     <x-page-header :title="$editando ? 'Editar Pagamento' : 'Novo Pagamento'">
         <x-slot:actions>
-            <a href="{{ route('pagamentos.index') }}" wire:navigate class="btn-secondary">Voltar</a>
+            <a href="{{ route('pagamentos.index', $this->paramsVoltar()) }}" wire:navigate class="btn-secondary">Voltar</a>
         </x-slot:actions>
     </x-page-header>
 
@@ -83,7 +83,7 @@
         </x-card>
 
         <div class="flex justify-end gap-2">
-            <a href="{{ route('pagamentos.index') }}" wire:navigate class="btn-secondary">Cancelar</a>
+            <a href="{{ route('pagamentos.index', $this->paramsVoltar()) }}" wire:navigate class="btn-secondary">Cancelar</a>
             <button type="submit" class="btn-primary">
                 <span wire:loading.remove wire:target="salvar">Salvar</span>
                 <span wire:loading wire:target="salvar">Salvando…</span>

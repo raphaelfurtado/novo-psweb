@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Auth\Login;
 use App\Livewire\Moradores\Index as MoradoresIndex;
+use App\Livewire\Pagamentos\Form as PagamentosForm;
 use App\Livewire\Pagamentos\Gerar;
 use App\Livewire\Pagamentos\Index as PagamentosIndex;
 use App\Livewire\Pagamentos\Reajuste;
@@ -236,6 +237,33 @@ class WritePathTest extends TestCase
 
         Livewire::test(RecebedoresIndex::class)->call('excluir', $r2->id);
         $this->assertDatabaseHas('recebedor', ['id' => $r2->id]);
+    }
+
+    public function test_salvar_pagamento_volta_com_contexto_do_morador(): void
+    {
+        $u = User::query()->has('endereco')->first();
+        $p = Pagamento::create(['id_usuario' => $u->id, 'id_tipo_pagamento' => TipoPagamento::TIPO_MENSALIDADE,
+            'referencia' => '062099', 'valor' => 90, 'situacao' => 'ABERTO', 'data_insert' => now()]);
+
+        // Sem filtros na URL -> fallback para ano + nome do morador.
+        Livewire::test(PagamentosForm::class, ['pagamento' => $p])
+            ->set('valor', '95,00')
+            ->call('salvar')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('pagamentos.index', ['ano' => '2099', 'q' => $u->nome]));
+    }
+
+    public function test_form_de_pagamento_preserva_filtros_da_url_no_voltar(): void
+    {
+        $p = Pagamento::query()->first();
+
+        $resp = $this->get(route('pagamentos.edit', [
+            'pagamento' => $p->id, 'q' => 'Fulano', 'ano' => '2099', 'situacao' => 'ABERTO',
+        ]));
+
+        $resp->assertOk();
+        $resp->assertSee('q=Fulano', false);
+        $resp->assertSee('situacao=ABERTO', false);
     }
 
     public function test_gerar_mensalidades_do_ano_via_livewire(): void

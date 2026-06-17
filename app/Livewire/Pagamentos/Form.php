@@ -37,8 +37,16 @@ class Form extends Component
 
     public $anexo = null;
 
+    /** Filtros da listagem para preservar o contexto ao voltar (morador, ano, etc.). */
+    public array $voltar = [];
+
     public function mount(?Pagamento $pagamento = null): void
     {
+        $this->voltar = array_filter(
+            request()->only(['q', 'ano', 'mes', 'situacao', 'tipo']),
+            fn ($v) => $v !== '' && $v !== null
+        );
+
         if ($pagamento && $pagamento->exists) {
             $this->pagamento = $pagamento;
             $this->editando = true;
@@ -128,7 +136,28 @@ class Form extends Component
             );
         }
 
-        return $this->redirectRoute('pagamentos.index', navigate: true);
+        return $this->redirectRoute('pagamentos.index', $this->paramsVoltar(), navigate: true);
+    }
+
+    /**
+     * Parâmetros para voltar à listagem preservando o contexto.
+     * Usa os filtros recebidos; se não houver, cai no morador + ano do lançamento.
+     */
+    public function paramsVoltar(): array
+    {
+        if (! empty($this->voltar)) {
+            return $this->voltar;
+        }
+
+        $params = [];
+        if ($this->ano) {
+            $params['ano'] = $this->ano;
+        }
+        if ($this->id_usuario && ($u = User::find($this->id_usuario))) {
+            $params['q'] = $u->nome;
+        }
+
+        return $params;
     }
 
     public function render()
