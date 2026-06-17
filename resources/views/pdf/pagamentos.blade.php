@@ -10,7 +10,7 @@
     <table>
         <thead>
             <tr>
-                <th>Morador</th><th>Ref.</th><th>Tipo</th><th>Forma</th>
+                <th>Morador</th><th>Qd.</th><th>Casa</th><th>Ref.</th><th>Tipo</th><th>Forma</th>
                 <th>Pagamento</th><th>Vencimento</th><th class="right">Valor</th><th>Situação</th>
             </tr>
         </thead>
@@ -18,6 +18,8 @@
             @forelse ($rows as $p)
                 <tr>
                     <td>{{ $p->usuario?->nome ?? '—' }}</td>
+                    <td>{{ $p->usuario?->endereco?->quadra ?? '—' }}</td>
+                    <td>{{ $p->usuario?->endereco?->numero ?? '—' }}</td>
                     <td>{{ \App\Support\Referencia::abreviada($p->referencia) }}</td>
                     <td>{{ $p->tipoPagamento?->descricao ?? '—' }}</td>
                     <td>{{ $p->formaPagamento?->descricao ?? '—' }}</td>
@@ -27,12 +29,12 @@
                     <td><span class="badge">{{ $p->esta_vencido ? 'VENCIDO' : $p->situacao }}</span></td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="center">Nenhum pagamento para os filtros.</td></tr>
+                <tr><td colspan="10" class="center">Nenhum pagamento para os filtros.</td></tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="6">Total · {{ $count }} lançamento(s)</td>
+                <td colspan="8">Total · {{ $count }} lançamento(s)</td>
                 <td class="right">{{ \App\Support\Valor::moeda($total) }}</td>
                 <td></td>
             </tr>

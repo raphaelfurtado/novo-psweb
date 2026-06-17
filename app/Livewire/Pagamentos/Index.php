@@ -110,7 +110,7 @@ class Index extends Component
     public function render()
     {
         $pagamentos = $this->baseQuery()
-            ->with(['usuario', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes'])
+            ->with(['usuario.endereco', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes'])
             // Ordena por referência crescente (ano, depois mês) — ordem cronológica.
             ->orderByRaw('SUBSTR(referencia, 3, 4) ASC, SUBSTR(referencia, 1, 2) ASC')
             ->orderBy('id')

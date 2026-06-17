@@ -33,7 +33,7 @@ class MovimentacaoExportController extends Controller
     public function pagamentos(Request $r)
     {
         $rows = Pagamento::query()
-            ->with(['usuario', 'tipoPagamento', 'formaPagamento'])
+            ->with(['usuario.endereco', 'tipoPagamento', 'formaPagamento'])
             ->when($r->filled('ano'), fn ($q) => $q->whereRaw('SUBSTR(referencia, 3, 4) = ?', [$r->query('ano')]))
             ->when($r->filled('mes'), fn ($q) => $q->whereRaw('SUBSTR(referencia, 1, 2) = ?', [$r->query('mes')]))
             ->when($r->query('situacao') === 'VENCIDO', fn ($q) => $q->vencido())
@@ -50,14 +50,15 @@ class MovimentacaoExportController extends Controller
 
         if ($r->query('fmt') === 'excel') {
             $linhas = $rows->map(fn ($p) => [
-                $p->usuario?->nome, Referencia::abreviada($p->referencia), $p->tipoPagamento?->descricao,
+                $p->usuario?->nome, $p->usuario?->endereco?->quadra, $p->usuario?->endereco?->numero,
+                Referencia::abreviada($p->referencia), $p->tipoPagamento?->descricao,
                 $p->formaPagamento?->descricao, optional($p->data_pagamento)->format('d/m/Y'),
                 optional($p->data_vencimento)->format('d/m/Y'), Valor::br($p->valor),
                 $p->esta_vencido ? 'VENCIDO' : $p->situacao,
             ])->all();
 
             return Excel::download(new ArrayExport($linhas,
-                ['Morador', 'Referência', 'Tipo', 'Forma', 'Pagamento', 'Vencimento', 'Valor', 'Situação'],
+                ['Morador', 'Quadra', 'Casa', 'Referência', 'Tipo', 'Forma', 'Pagamento', 'Vencimento', 'Valor', 'Situação'],
                 'Pagamentos'), 'pagamentos.xlsx');
         }
 

@@ -52,6 +52,8 @@
                 <thead>
                     <tr>
                         <th>Morador</th>
+                        <th>Quadra</th>
+                        <th>Casa</th>
                         <th>Referência</th>
                         <th>Tipo</th>
                         <th>Forma</th>
@@ -65,6 +67,8 @@
                     @forelse ($pagamentos as $p)
                         <tr wire:key="pag-{{ $p->id }}">
                             <td class="font-medium text-gray-900 dark:text-white">{{ $p->usuario?->nome ?? '—' }}</td>
+                            <td class="text-gray-500">{{ $p->usuario?->endereco?->quadra ?? '—' }}</td>
+                            <td class="text-gray-500">{{ $p->usuario?->endereco?->numero ?? '—' }}</td>
                             <td class="font-mono">{{ \App\Support\Referencia::abreviada($p->referencia) }}</td>
                             <td>{{ $p->tipoPagamento?->descricao ?? '—' }}</td>
                             <td class="text-gray-500">{{ $p->formaPagamento?->descricao ?? '—' }}</td>
@@ -101,12 +105,12 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="py-10 text-center text-gray-400">Nenhum pagamento encontrado para os filtros.</td></tr>
+                        <tr><td colspan="10" class="py-10 text-center text-gray-400">Nenhum pagamento encontrado para os filtros.</td></tr>
                     @endforelse
                 </tbody>
                 <tfoot class="border-t-2 border-gray-200 dark:border-gray-600">
                     <tr>
-                        <td colspan="5" class="px-4 py-3 font-semibold">Total filtrado · {{ number_format($pagamentos->total(), 0, ',', '.') }} lançamento(s)</td>
+                        <td colspan="7" class="px-4 py-3 font-semibold">Total filtrado · {{ number_format($pagamentos->total(), 0, ',', '.') }} lançamento(s)</td>
                         <td class="px-4 py-3 text-right font-bold">{{ \App\Support\Valor::moeda($totalFiltro) }}</td>
                         <td colspan="2"></td>
                     </tr>
