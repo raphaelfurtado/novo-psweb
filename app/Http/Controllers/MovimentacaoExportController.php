@@ -42,6 +42,10 @@ class MovimentacaoExportController extends Controller
             ->when($r->filled('tipo'), fn ($q) => $q->where('id_tipo_pagamento', $r->query('tipo')))
             ->when($r->filled('q'), fn ($q) => $q->whereHas('usuario',
                 fn ($q) => $q->where('nome', 'like', '%' . $r->query('q') . '%')))
+            ->when($r->filled('quadra'), fn ($q) => $q->whereHas('usuario.endereco',
+                fn ($q) => $q->where('quadra', $r->query('quadra'))))
+            ->when($r->filled('numero'), fn ($q) => $q->whereHas('usuario.endereco',
+                fn ($q) => $q->where('numero', $r->query('numero'))))
             ->orderByRaw('SUBSTR(referencia, 3, 4) ASC, SUBSTR(referencia, 1, 2) ASC')->orderBy('id')->get();
 
         if ($r->query('fmt') === 'excel') {

@@ -20,7 +20,7 @@
     </div>
 
     <x-card :padding="false">
-        <div class="grid grid-cols-1 gap-3 border-b border-gray-100 p-4 dark:border-gray-700 sm:grid-cols-2 lg:grid-cols-6">
+        <div class="grid grid-cols-1 gap-3 border-b border-gray-100 p-4 dark:border-gray-700 sm:grid-cols-2 lg:grid-cols-4">
             <div class="lg:col-span-2">
                 <input wire:model.live.debounce.300ms="search" class="form-input" placeholder="Buscar morador…">
             </div>
@@ -40,6 +40,11 @@
                 <option value="">Todos os tipos</option>
                 @foreach ($tipos as $t)<option value="{{ $t->codigo }}">{{ $t->descricao }}</option>@endforeach
             </select>
+            <select wire:model.live="quadra" class="form-select">
+                <option value="">Toda quadra</option>
+                @foreach ($quadras as $q)<option value="{{ $q }}">Quadra {{ $q }}</option>@endforeach
+            </select>
+            <input wire:model.live.debounce.300ms="numero" class="form-input" placeholder="Nº da casa" inputmode="numeric">
         </div>
 
         <div class="table-wrap border-0">

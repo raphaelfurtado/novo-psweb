@@ -43,7 +43,7 @@ class Form extends Component
     public function mount(?Pagamento $pagamento = null): void
     {
         $this->voltar = array_filter(
-            request()->only(['q', 'ano', 'mes', 'situacao', 'tipo']),
+            request()->only(['q', 'ano', 'mes', 'situacao', 'tipo', 'quadra', 'numero']),
             fn ($v) => $v !== '' && $v !== null
         );
 

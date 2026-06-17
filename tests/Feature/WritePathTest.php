@@ -266,6 +266,36 @@ class WritePathTest extends TestCase
         $resp->assertSee('situacao=ABERTO', false);
     }
 
+    public function test_filtro_por_quadra_e_numero_nos_pagamentos(): void
+    {
+        $a = User::create(['nome' => 'Quadra77', 'telefone' => '91900000077', 'aniversario' => '',
+            'senha' => Hash::make('x123456'), 'role' => 'user', 'consent_policy' => 'S']);
+        Endereco::create(['id_usuario' => $a->id, 'numero' => '10', 'quadra' => 77, 'qtd_lote' => 1, 'data_insert' => now()]);
+
+        $b = User::create(['nome' => 'Quadra88', 'telefone' => '91900000088', 'aniversario' => '',
+            'senha' => Hash::make('x123456'), 'role' => 'user', 'consent_policy' => 'S']);
+        Endereco::create(['id_usuario' => $b->id, 'numero' => '20', 'quadra' => 88, 'qtd_lote' => 1, 'data_insert' => now()]);
+
+        $base = ['id_tipo_pagamento' => TipoPagamento::TIPO_MENSALIDADE, 'referencia' => '012099',
+            'valor' => 10, 'situacao' => 'ABERTO', 'data_insert' => now()];
+        $pa = Pagamento::create($base + ['id_usuario' => $a->id]);
+        $pb = Pagamento::create($base + ['id_usuario' => $b->id]);
+
+        // Filtro por quadra 77 -> só o pagamento do morador A.
+        Livewire::test(PagamentosIndex::class)
+            ->set('ano', '2099')
+            ->set('quadra', '77')
+            ->assertViewHas('pagamentos', fn ($p) => $p->pluck('id')->contains($pa->id)
+                && ! $p->pluck('id')->contains($pb->id));
+
+        // Filtro por número 20 -> só o pagamento do morador B.
+        Livewire::test(PagamentosIndex::class)
+            ->set('ano', '2099')
+            ->set('numero', '20')
+            ->assertViewHas('pagamentos', fn ($p) => $p->pluck('id')->contains($pb->id)
+                && ! $p->pluck('id')->contains($pa->id));
+    }
+
     public function test_gerar_mensalidades_do_ano_via_livewire(): void
     {
         Livewire::test(Gerar::class)

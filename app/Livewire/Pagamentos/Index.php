@@ -7,6 +7,7 @@ use App\Models\Pagamento;
 use App\Models\TipoPagamento;
 use App\Support\Referencia;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -31,6 +32,12 @@ class Index extends Component
     #[Url(as: 'q')]
     public string $search = '';
 
+    #[Url]
+    public string $quadra = '';
+
+    #[Url]
+    public string $numero = '';
+
     public function mount(): void
     {
         $this->ano = $this->ano ?: Carbon::now()->format('Y');
@@ -38,7 +45,7 @@ class Index extends Component
 
     public function updated($name): void
     {
-        if (in_array($name, ['ano', 'mes', 'situacao', 'tipo', 'search'])) {
+        if (in_array($name, ['ano', 'mes', 'situacao', 'tipo', 'search', 'quadra', 'numero'])) {
             $this->resetPage();
         }
     }
@@ -78,6 +85,8 @@ class Index extends Component
             'mes' => $this->mes,
             'situacao' => $this->situacao,
             'tipo' => $this->tipo,
+            'quadra' => $this->quadra,
+            'numero' => $this->numero,
         ], fn ($v) => $v !== '' && $v !== null);
     }
 
@@ -91,7 +100,11 @@ class Index extends Component
                 fn ($q) => $q->where('situacao', $this->situacao))
             ->when($this->tipo !== '', fn ($q) => $q->where('id_tipo_pagamento', $this->tipo))
             ->when($this->search, fn ($q) => $q->whereHas('usuario',
-                fn ($q) => $q->where('nome', 'like', "%{$this->search}%")));
+                fn ($q) => $q->where('nome', 'like', "%{$this->search}%")))
+            ->when($this->quadra !== '', fn ($q) => $q->whereHas('usuario.endereco',
+                fn ($q) => $q->where('quadra', $this->quadra)))
+            ->when($this->numero !== '', fn ($q) => $q->whereHas('usuario.endereco',
+                fn ($q) => $q->where('numero', $this->numero)));
     }
 
     public function render()
@@ -110,6 +123,7 @@ class Index extends Component
             'anos' => $this->anosDisponiveis(),
             'meses' => Referencia::MESES,
             'tipos' => TipoPagamento::orderBy('codigo')->get(),
+            'quadras' => DB::table('endereco')->select('quadra')->distinct()->orderBy('quadra')->pluck('quadra'),
         ]);
     }
 
