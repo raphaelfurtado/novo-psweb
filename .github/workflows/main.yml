@@ -28,6 +28,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: novo-psweb/
+          timeout: 120000
           # Protege arquivos que vivem só no servidor (não vêm do repositório):
           # .env de produção, dependências e os anexos enviados.
           # OBS: public/build agora É enviado (gerado no passo de build acima).
@@ -55,3 +56,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./public/build/
           server-dir: psweb.forcehub.com.br/build/
+          timeout: 120000
