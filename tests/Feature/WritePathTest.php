@@ -152,13 +152,16 @@ class WritePathTest extends TestCase
         $vencido = Pagamento::create($base + ['situacao' => 'ABERTO', 'data_vencimento' => now()->subDays(5), 'referencia' => '012099', 'valor' => 10]);
         $futuro = Pagamento::create($base + ['situacao' => 'ABERTO', 'data_vencimento' => now()->addDays(5), 'referencia' => '022099', 'valor' => 10]);
         $pago = Pagamento::create($base + ['situacao' => 'PAGO', 'data_vencimento' => now()->subDays(5), 'referencia' => '032099', 'valor' => 10]);
+        // PENDENTE com vencimento passado NÃO é vencido (status manual preservado).
+        $pendente = Pagamento::create($base + ['situacao' => 'PENDENTE', 'data_vencimento' => now()->subDays(5), 'referencia' => '042099', 'valor' => 10]);
 
-        $ids = Pagamento::vencido()->whereIn('id', [$vencido->id, $futuro->id, $pago->id])->pluck('id')->all();
-        $this->assertSame([$vencido->id], $ids, 'Vencido deve listar só o em aberto com vencimento passado.');
+        $ids = Pagamento::vencido()->whereIn('id', [$vencido->id, $futuro->id, $pago->id, $pendente->id])->pluck('id')->all();
+        $this->assertSame([$vencido->id], $ids, 'Vencido deve listar só o ABERTO com vencimento passado.');
 
         $this->assertTrue($vencido->fresh()->esta_vencido);
         $this->assertFalse($futuro->fresh()->esta_vencido);
         $this->assertFalse($pago->fresh()->esta_vencido);
+        $this->assertFalse($pendente->fresh()->esta_vencido, 'PENDENTE não deve ser marcado como vencido.');
     }
 
     public function test_exclusao_de_morador_respeita_pagamentos(): void
@@ -294,6 +297,54 @@ class WritePathTest extends TestCase
             ->set('numero', '20')
             ->assertViewHas('pagamentos', fn ($p) => $p->pluck('id')->contains($pb->id)
                 && ! $p->pluck('id')->contains($pa->id));
+    }
+
+    public function test_gerar_apenas_competencias_selecionadas(): void
+    {
+        $totalMoradores = User::has('endereco')->count();
+
+        Livewire::test(Gerar::class)
+            ->set('ano', '2098')
+            ->set('valor', '80,00')
+            ->set('dia_vencimento', 10)
+            ->set('mesesSelecionados', ['06', '07', '08', '09', '10', '11', '12']) // jun-dez
+            ->call('gerar')
+            ->assertHasNoErrors();
+
+        $base = Pagamento::whereRaw("SUBSTR(referencia, 3, 4) = '2098'")
+            ->where('id_tipo_pagamento', TipoPagamento::TIPO_MENSALIDADE);
+
+        $this->assertSame($totalMoradores * 7, (clone $base)->count(), 'Devem existir 7 competências por morador.');
+        $this->assertSame(0, Pagamento::where('referencia', '012098')
+            ->where('id_tipo_pagamento', TipoPagamento::TIPO_MENSALIDADE)->count(), 'Janeiro não deveria ser gerado.');
+        $this->assertSame($totalMoradores, Pagamento::where('referencia', '062098')
+            ->where('id_tipo_pagamento', TipoPagamento::TIPO_MENSALIDADE)->count(), 'Junho deveria ser gerado.');
+    }
+
+    public function test_ordenacao_alfabetica_por_morador(): void
+    {
+        $z = User::create(['nome' => 'ZZZ Teste', 'telefone' => '91900000097', 'aniversario' => '',
+            'senha' => Hash::make('x123456'), 'role' => 'user', 'consent_policy' => 'S']);
+        Endereco::create(['id_usuario' => $z->id, 'numero' => '10', 'quadra' => 1, 'qtd_lote' => 1, 'data_insert' => now()]);
+
+        $a = User::create(['nome' => 'AAA Teste', 'telefone' => '91900000098', 'aniversario' => '',
+            'senha' => Hash::make('x123456'), 'role' => 'user', 'consent_policy' => 'S']);
+        Endereco::create(['id_usuario' => $a->id, 'numero' => '11', 'quadra' => 1, 'qtd_lote' => 1, 'data_insert' => now()]);
+
+        $base = ['id_tipo_pagamento' => TipoPagamento::TIPO_MENSALIDADE, 'referencia' => '012097',
+            'valor' => 10, 'situacao' => 'ABERTO', 'data_insert' => now()];
+        $pz = Pagamento::create($base + ['id_usuario' => $z->id]);
+        $pa = Pagamento::create($base + ['id_usuario' => $a->id]);
+
+        // A-Z: AAA primeiro.
+        Livewire::test(PagamentosIndex::class)
+            ->set('ano', '2097')->set('sortField', 'nome')->set('sortDirection', 'asc')
+            ->assertViewHas('pagamentos', fn ($p) => $p->first()?->id === $pa->id && $p->last()?->id === $pz->id);
+
+        // Z-A: ZZZ primeiro.
+        Livewire::test(PagamentosIndex::class)
+            ->set('ano', '2097')->set('sortField', 'nome')->set('sortDirection', 'desc')
+            ->assertViewHas('pagamentos', fn ($p) => $p->first()?->id === $pz->id);
     }
 
     public function test_gerar_mensalidades_do_ano_via_livewire(): void

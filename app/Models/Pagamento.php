@@ -94,18 +94,21 @@ class Pagamento extends Model
         return $query->whereIn('situacao', ['ABERTO', 'PENDENTE']);
     }
 
-    /** Vencido = em aberto e com a data de vencimento já passada (status derivado, não armazenado). */
+    /**
+     * Vencido = ABERTO com a data de vencimento já passada (status derivado, não armazenado).
+     * PENDENTE é um status definido manualmente e NÃO é considerado vencido.
+     */
     public function scopeVencido(Builder $query): Builder
     {
-        return $query->whereIn('situacao', ['ABERTO', 'PENDENTE'])
+        return $query->where('situacao', 'ABERTO')
             ->whereNotNull('data_vencimento')
             ->whereDate('data_vencimento', '<', today());
     }
 
-    /** Indica, por linha, se o pagamento está vencido. */
+    /** Indica, por linha, se o pagamento está vencido (apenas ABERTO). */
     public function getEstaVencidoAttribute(): bool
     {
-        return in_array($this->situacao, ['ABERTO', 'PENDENTE'], true)
+        return $this->situacao === 'ABERTO'
             && $this->data_vencimento
             && $this->data_vencimento->lt(today());
     }

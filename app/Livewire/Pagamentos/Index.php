@@ -38,9 +38,28 @@ class Index extends Component
     #[Url]
     public string $numero = '';
 
+    #[Url(as: 'ord')]
+    public string $sortField = 'referencia';
+
+    #[Url(as: 'dir')]
+    public string $sortDirection = 'asc';
+
     public function mount(): void
     {
         $this->ano = $this->ano ?: Carbon::now()->format('Y');
+    }
+
+    /** Alterna a ordenação por coluna (nome = alfabética). */
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+
+        $this->resetPage();
     }
 
     public function updated($name): void
@@ -109,12 +128,24 @@ class Index extends Component
 
     public function render()
     {
-        $pagamentos = $this->baseQuery()
-            ->with(['usuario.endereco', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes'])
-            // Ordena por referência crescente (ano, depois mês) — ordem cronológica.
-            ->orderByRaw('SUBSTR(referencia, 3, 4) ASC, SUBSTR(referencia, 1, 2) ASC')
-            ->orderBy('id')
-            ->paginate(15);
+        $dir = $this->sortDirection === 'desc' ? 'desc' : 'asc';
+
+        $query = $this->baseQuery()
+            ->with(['usuario.endereco', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes']);
+
+        if ($this->sortField === 'nome') {
+            // Ordem alfabética pelo nome do morador.
+            $query->leftJoin('users', 'users.id', '=', 'pagamento.id_usuario')
+                ->select('pagamento.*')
+                ->orderBy('users.nome', $dir);
+        } elseif ($this->sortField === 'valor') {
+            $query->orderBy('valor', $dir);
+        } else {
+            // Padrão: referência cronológica (ano, depois mês).
+            $query->orderByRaw("SUBSTR(referencia, 3, 4) {$dir}, SUBSTR(referencia, 1, 2) {$dir}");
+        }
+
+        $pagamentos = $query->orderBy('pagamento.id')->paginate(15);
 
         return view('livewire.pagamentos.index', [
             'pagamentos' => $pagamentos,

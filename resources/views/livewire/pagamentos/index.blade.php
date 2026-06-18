@@ -51,14 +51,29 @@
             <table class="table-base">
                 <thead>
                     <tr>
-                        <th>Morador</th>
+                        <th>
+                            <button type="button" wire:click="sortBy('nome')" class="inline-flex items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200">
+                                Morador
+                                @if ($sortField === 'nome')<span class="text-brand-600">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>@endif
+                            </button>
+                        </th>
                         <th>Quadra</th>
                         <th>Casa</th>
-                        <th>Referência</th>
+                        <th>
+                            <button type="button" wire:click="sortBy('referencia')" class="inline-flex items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200">
+                                Referência
+                                @if ($sortField === 'referencia')<span class="text-brand-600">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>@endif
+                            </button>
+                        </th>
                         <th>Tipo</th>
                         <th>Forma</th>
                         <th>Pagto</th>
-                        <th class="text-right">Valor</th>
+                        <th class="text-right">
+                            <button type="button" wire:click="sortBy('valor')" class="inline-flex items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200">
+                                Valor
+                                @if ($sortField === 'valor')<span class="text-brand-600">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>@endif
+                            </button>
+                        </th>
                         <th>Situação</th>
                         <th class="w-28 text-right">Ações</th>
                     </tr>

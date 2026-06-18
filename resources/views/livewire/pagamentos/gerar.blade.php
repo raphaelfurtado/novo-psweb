@@ -21,14 +21,36 @@
                         </x-field>
                     </div>
 
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <label class="form-label mb-0">Competências a gerar</label>
+                            <div class="flex gap-2 text-xs">
+                                <button type="button" class="text-brand-600 hover:underline" wire:click="marcarTodos">Marcar todos</button>
+                                <span class="text-gray-300">·</span>
+                                <button type="button" class="text-brand-600 hover:underline" wire:click="limparMeses">Limpar</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                            @foreach ($meses as $cod => $nome)
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 dark:border-gray-700 dark:has-[:checked]:bg-brand-900/20">
+                                    <input type="checkbox" wire:model.live="mesesSelecionados" value="{{ $cod }}"
+                                           class="rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                                    <span>{{ ucfirst(mb_strtolower(\App\Support\Referencia::MESES_ABREV[$cod] ?? $nome)) }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('mesesSelecionados')<p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
                     <div class="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-200 dark:ring-amber-800">
-                        Serão criados os 12 meses ({{ $ano }}) para cada morador. Meses que já possuem mensalidade
-                        são <strong>ignorados</strong> (não há duplicação).
+                        Serão criadas <strong>{{ count($mesesSelecionados) }}</strong> competência(s) de {{ $ano }} para cada morador.
+                        Meses que já possuem mensalidade são <strong>ignorados</strong> (não há duplicação) — ideal para morador
+                        que entrou no meio do ano.
                     </div>
 
                     <div class="flex justify-end">
                         <button type="submit" class="btn-primary"
-                                wire:confirm="Gerar as mensalidades de {{ $ano }} para todos os moradores?">
+                                wire:confirm="Gerar {{ count($mesesSelecionados) }} competência(s) de {{ $ano }} para os moradores?">
                             <span wire:loading.remove wire:target="gerar">Gerar mensalidades</span>
                             <span wire:loading wire:target="gerar">Processando…</span>
                         </button>

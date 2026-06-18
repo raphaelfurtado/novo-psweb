@@ -5,6 +5,7 @@ namespace App\Livewire\Pagamentos;
 use App\Models\Pagamento;
 use App\Models\TipoPagamento;
 use App\Models\User;
+use App\Support\Referencia;
 use App\Support\Valor;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +21,16 @@ class Gerar extends Component
     public string $ano;
     public string $valor = '';
     public int $dia_vencimento = 10;
-    public bool $somenteSemPagamento = true;
+
+    /** Competências (meses '01'..'12') que serão geradas. */
+    public array $mesesSelecionados = [];
 
     public ?array $resultado = null;
 
     public function mount(): void
     {
         $this->ano = Carbon::now()->format('Y');
+        $this->mesesSelecionados = array_keys(Referencia::MESES); // todos por padrão
     }
 
     protected function rules(): array
@@ -35,6 +39,7 @@ class Gerar extends Component
             'ano' => ['required', 'digits:4'],
             'valor' => ['required'],
             'dia_vencimento' => ['required', 'integer', 'between:1,28'],
+            'mesesSelecionados' => ['required', 'array', 'min:1'],
         ];
     }
 
@@ -43,7 +48,19 @@ class Gerar extends Component
         return [
             'required' => 'Campo obrigatório.',
             'dia_vencimento.between' => 'O dia deve estar entre 1 e 28.',
+            'mesesSelecionados.required' => 'Selecione ao menos uma competência.',
+            'mesesSelecionados.min' => 'Selecione ao menos uma competência.',
         ];
+    }
+
+    public function marcarTodos(): void
+    {
+        $this->mesesSelecionados = array_keys(Referencia::MESES);
+    }
+
+    public function limparMeses(): void
+    {
+        $this->mesesSelecionados = [];
     }
 
     public function gerar(): void
@@ -56,9 +73,12 @@ class Gerar extends Component
         $criados = 0;
         $pulados = 0;
 
-        DB::transaction(function () use ($moradores, $valor, &$criados, &$pulados) {
+        // Garante ordem cronológica e remove duplicatas.
+        $meses = collect($this->mesesSelecionados)->map(fn ($m) => (int) $m)->unique()->sort()->values();
+
+        DB::transaction(function () use ($moradores, $valor, $meses, &$criados, &$pulados) {
             foreach ($moradores as $morador) {
-                for ($m = 1; $m <= 12; $m++) {
+                foreach ($meses as $m) {
                     $referencia = sprintf('%02d%s', $m, $this->ano);
 
                     $existe = Pagamento::where('id_usuario', $morador->id)
@@ -100,6 +120,7 @@ class Gerar extends Component
         $ano = $this->ano;
 
         return view('livewire.pagamentos.gerar', [
+            'meses' => Referencia::MESES,
             'totalMoradores' => User::has('endereco')->count(),
             'semPagamento' => User::has('endereco')
                 ->whereDoesntHave('pagamentos', fn ($q) => $q->whereRaw('SUBSTR(referencia, 3, 4) = ?', [$ano])
