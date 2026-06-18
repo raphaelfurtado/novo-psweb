@@ -50,28 +50,36 @@
         <div class="table-wrap border-0">
             <table class="table-base">
                 <thead>
+                    @php
+                        $sortIcon = function ($field) use ($sortField, $sortDirection) {
+                            if ($sortField === $field) {
+                                return '<svg class="h-3.5 w-3.5 text-brand-600" fill="currentColor" viewBox="0 0 20 20">'
+                                    .($sortDirection === 'asc'
+                                        ? '<path d="M10 5l4 6H6l4-6z"/>'
+                                        : '<path d="M10 15l-4-6h8l-4 6z"/>').'</svg>';
+                            }
+                            return '<svg class="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 4l3 4H7l3-4zM10 16l-3-4h6l-3 4z"/></svg>';
+                        };
+                    @endphp
                     <tr>
                         <th>
-                            <button type="button" wire:click="sortBy('nome')" class="inline-flex items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200">
-                                Morador
-                                @if ($sortField === 'nome')<span class="text-brand-600">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>@endif
+                            <button type="button" wire:click="sortBy('nome')" class="group inline-flex cursor-pointer items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200" title="Ordenar por nome">
+                                Morador {!! $sortIcon('nome') !!}
                             </button>
                         </th>
                         <th>Quadra</th>
                         <th>Casa</th>
                         <th>
-                            <button type="button" wire:click="sortBy('referencia')" class="inline-flex items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200">
-                                Referência
-                                @if ($sortField === 'referencia')<span class="text-brand-600">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>@endif
+                            <button type="button" wire:click="sortBy('referencia')" class="group inline-flex cursor-pointer items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200" title="Ordenar por referência">
+                                Referência {!! $sortIcon('referencia') !!}
                             </button>
                         </th>
                         <th>Tipo</th>
                         <th>Forma</th>
                         <th>Pagto</th>
                         <th class="text-right">
-                            <button type="button" wire:click="sortBy('valor')" class="inline-flex items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200">
-                                Valor
-                                @if ($sortField === 'valor')<span class="text-brand-600">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>@endif
+                            <button type="button" wire:click="sortBy('valor')" class="group ml-auto inline-flex cursor-pointer items-center gap-1 uppercase hover:text-gray-700 dark:hover:text-gray-200" title="Ordenar por valor">
+                                Valor {!! $sortIcon('valor') !!}
                             </button>
                         </th>
                         <th>Situação</th>
