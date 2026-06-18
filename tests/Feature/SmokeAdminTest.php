@@ -97,9 +97,11 @@ class SmokeAdminTest extends TestCase
             '/relatorios/resumo-caixa/excel?referencia=012025',
             '/relatorios/demonstrativo-anual/excel?ano=2025',
             '/relatorios/inadimplencia-avancada/excel?ano=2025',
-            // Exportação das listagens (com filtros)
+            // Exportação das listagens (com filtros e ordenação)
             '/pagamentos/export?fmt=pdf&ano=2025',
             '/pagamentos/export?fmt=excel&ano=2025&situacao=VENCIDO',
+            '/pagamentos/export?fmt=pdf&ano=2025&ord=nome&dir=asc',
+            '/pagamentos/export?fmt=excel&ano=2025&ord=valor&dir=desc',
             '/saidas/export?fmt=pdf&ano=2025',
             '/folha/export?fmt=excel&ano=2025',
         ];

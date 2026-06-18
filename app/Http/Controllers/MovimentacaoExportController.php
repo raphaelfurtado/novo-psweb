@@ -46,7 +46,8 @@ class MovimentacaoExportController extends Controller
                 fn ($q) => $q->where('quadra', $r->query('quadra'))))
             ->when($r->filled('numero'), fn ($q) => $q->whereHas('usuario.endereco',
                 fn ($q) => $q->where('numero', $r->query('numero'))))
-            ->orderByRaw('SUBSTR(referencia, 3, 4) ASC, SUBSTR(referencia, 1, 2) ASC')->orderBy('id')->get();
+            ->ordenado($r->query('ord'), $r->query('dir'))
+            ->get();
 
         if ($r->query('fmt') === 'excel') {
             $linhas = $rows->map(fn ($p) => [

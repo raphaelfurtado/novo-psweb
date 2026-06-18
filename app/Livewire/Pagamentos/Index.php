@@ -89,10 +89,10 @@ class Index extends Component
         }
     }
 
-    /** Parâmetros (filtros atuais) para os links de exportação PDF/Excel. */
+    /** Parâmetros (filtros + ordenação atuais) para os links de exportação PDF/Excel. */
     public function paramsExport(string $fmt): array
     {
-        return ['fmt' => $fmt] + $this->filtrosAtuais();
+        return ['fmt' => $fmt, 'ord' => $this->sortField, 'dir' => $this->sortDirection] + $this->filtrosAtuais();
     }
 
     /** Filtros atuais (não vazios) — usados para preservar o contexto ao editar/voltar. */
@@ -128,24 +128,10 @@ class Index extends Component
 
     public function render()
     {
-        $dir = $this->sortDirection === 'desc' ? 'desc' : 'asc';
-
-        $query = $this->baseQuery()
-            ->with(['usuario.endereco', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes']);
-
-        if ($this->sortField === 'nome') {
-            // Ordem alfabética pelo nome do morador.
-            $query->leftJoin('users', 'users.id', '=', 'pagamento.id_usuario')
-                ->select('pagamento.*')
-                ->orderBy('users.nome', $dir);
-        } elseif ($this->sortField === 'valor') {
-            $query->orderBy('valor', $dir);
-        } else {
-            // Padrão: referência cronológica (ano, depois mês).
-            $query->orderByRaw("SUBSTR(referencia, 3, 4) {$dir}, SUBSTR(referencia, 1, 2) {$dir}");
-        }
-
-        $pagamentos = $query->orderBy('pagamento.id')->paginate(15);
+        $pagamentos = $this->baseQuery()
+            ->with(['usuario.endereco', 'tipoPagamento', 'formaPagamento', 'recebedor', 'comprovantes'])
+            ->ordenado($this->sortField, $this->sortDirection)
+            ->paginate(15);
 
         return view('livewire.pagamentos.index', [
             'pagamentos' => $pagamentos,

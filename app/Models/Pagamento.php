@@ -120,6 +120,27 @@ class Pagamento extends Model
     }
 
     /**
+     * Ordenação reutilizada pela listagem e pelos exports (mesma ordem na tela e no PDF/Excel).
+     * campo: 'nome' (alfabética), 'valor' ou 'referencia' (padrão, cronológica).
+     */
+    public function scopeOrdenado(Builder $query, ?string $campo, ?string $direcao): Builder
+    {
+        $dir = $direcao === 'desc' ? 'desc' : 'asc';
+
+        if ($campo === 'nome') {
+            $query->leftJoin('users', 'users.id', '=', 'pagamento.id_usuario')
+                ->select('pagamento.*')
+                ->orderBy('users.nome', $dir);
+        } elseif ($campo === 'valor') {
+            $query->orderBy('valor', $dir);
+        } else {
+            $query->orderByRaw("SUBSTR(referencia, 3, 4) {$dir}, SUBSTR(referencia, 1, 2) {$dir}");
+        }
+
+        return $query->orderBy('pagamento.id');
+    }
+
+    /**
      * Parcelas elegíveis para a conciliação automática (FIFO): em aberto e que
      * NÃO estejam reservadas por um acordo ainda em aberto.
      */
