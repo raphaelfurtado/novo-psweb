@@ -158,19 +158,62 @@ class Index extends Component
         return collect($refs)->mapWithKeys(fn ($r) => [$r => Referencia::abreviada($r)])->all();
     }
 
+    /**
+     * Portal da transparência do morador: por mês, quantas contribuições foram pagas
+     * (Portaria = tipo 3 e 13º = tipo 1), quantas faltam e o valor arrecadado — agregado
+     * de TODOS os moradores (espelha o dashboard comum do psweb legado).
+     */
     protected function dadosMorador(): array
     {
-        $id = auth()->id();
         $ano = $this->ano;
 
+        $rows = Pagamento::query()
+            ->whereIn('id_tipo_pagamento', [1, TipoPagamento::TIPO_MENSALIDADE])
+            ->whereRaw('SUBSTR(referencia, 3, 4) = ?', [$ano])
+            // Obs.: NÃO usar o alias 'valor_pago' — colide com o accessor getValorPagoAttribute (recebimentos OFX).
+            ->selectRaw("SUBSTR(referencia, 1, 2) as mes, id_tipo_pagamento as tipo,
+                SUM(CASE WHEN situacao = 'PAGO' THEN valor ELSE 0 END) as valor_arrecadado,
+                SUM(CASE WHEN situacao = 'PAGO' THEN 1 ELSE 0 END) as qtd_pago,
+                SUM(CASE WHEN situacao = 'ABERTO' THEN 1 ELSE 0 END) as qtd_aberto,
+                COUNT(*) as qtd_total")
+            ->groupBy('mes', 'tipo')
+            ->get();
+
+        $meses = [];
+        foreach ($rows as $r) {
+            $mes = $r->mes;
+            $meses[$mes] ??= [
+                'cod' => $mes . $ano,
+                'label' => Referencia::abreviada($mes . $ano),
+                'portaria' => null,
+                'decimo' => null,
+            ];
+
+            $card = [
+                'qtd_pago' => (int) $r->qtd_pago,
+                'qtd_total' => (int) $r->qtd_total,
+                'qtd_aberto' => (int) $r->qtd_aberto,
+                'valor_pago' => (float) $r->valor_arrecadado,
+            ];
+
+            if ((int) $r->tipo === TipoPagamento::TIPO_MENSALIDADE) {
+                $meses[$mes]['portaria'] = $card;
+            } elseif ((int) $r->tipo === 1) {
+                $meses[$mes]['decimo'] = $card;
+            }
+        }
+        ksort($meses);
+
+        $mesAtual = Carbon::now()->format('m');
+        $mesAtivo = isset($meses[$mesAtual])
+            ? $mesAtual . $ano
+            : (! empty($meses) ? array_key_first($meses) . $ano : '');
+
         return [
-            'totalPago' => (float) Pagamento::where('id_usuario', $id)->where('situacao', 'PAGO')
-                ->whereRaw('SUBSTR(referencia, 3, 4) = ?', [$ano])->sum('valor'),
-            'totalAberto' => (float) Pagamento::where('id_usuario', $id)->whereIn('situacao', ['ABERTO', 'PENDENTE'])
-                ->whereRaw('SUBSTR(referencia, 3, 4) = ?', [$ano])->sum('valor'),
-            'proximos' => Pagamento::where('id_usuario', $id)->whereIn('situacao', ['ABERTO', 'PENDENTE'])
-                ->with('tipoPagamento')->orderBy('data_vencimento')->limit(6)->get(),
+            'ano' => $ano,
             'anos' => $this->anosDisponiveis(),
+            'meses' => array_values($meses),
+            'mesAtivo' => $mesAtivo,
         ];
     }
 

@@ -347,6 +347,34 @@ class WritePathTest extends TestCase
             ->assertViewHas('pagamentos', fn ($p) => $p->first()?->id === $pz->id);
     }
 
+    public function test_dashboard_morador_agrega_contribuicoes_de_todos(): void
+    {
+        $morador = User::query()->where('role', 'user')->first();
+
+        $a = User::create(['nome' => 'Morador A', 'telefone' => '91900000201', 'aniversario' => '',
+            'senha' => Hash::make('x123456'), 'role' => 'user', 'consent_policy' => 'S']);
+        $b = User::create(['nome' => 'Morador B', 'telefone' => '91900000202', 'aniversario' => '',
+            'senha' => Hash::make('x123456'), 'role' => 'user', 'consent_policy' => 'S']);
+
+        $base = ['id_tipo_pagamento' => TipoPagamento::TIPO_MENSALIDADE, 'referencia' => '012096', 'data_insert' => now()];
+        Pagamento::create($base + ['id_usuario' => $a->id, 'situacao' => 'PAGO', 'valor' => 90]);
+        Pagamento::create($base + ['id_usuario' => $b->id, 'situacao' => 'ABERTO', 'valor' => 90]);
+
+        $this->actingAs($morador);
+
+        Livewire::test(\App\Livewire\Dashboard\Index::class)
+            ->set('ano', '2096')
+            ->assertViewHas('meses', function ($meses) {
+                $jan = collect($meses)->firstWhere('cod', '012096');
+
+                return $jan
+                    && $jan['portaria']['qtd_pago'] === 1
+                    && $jan['portaria']['qtd_total'] === 2
+                    && $jan['portaria']['qtd_aberto'] === 1
+                    && (float) $jan['portaria']['valor_pago'] === 90.0;
+            });
+    }
+
     public function test_gerar_mensalidades_do_ano_via_livewire(): void
     {
         Livewire::test(Gerar::class)
